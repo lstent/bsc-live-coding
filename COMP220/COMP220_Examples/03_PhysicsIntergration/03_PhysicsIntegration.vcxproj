@@ -159,6 +159,7 @@ copy $(ProjectDir)\*.glsl $(OutDir)\*.glsl</Command>
     <None Include="colourFrag.glsl" />
     <None Include="colourVert.glsl" />
     <None Include="cube.nff" />
+    <None Include="frag.glsl" />
     <None Include="lightingFrag.glsl" />
     <None Include="lightingVert.glsl" />
     <None Include="textureFrag.glsl" />

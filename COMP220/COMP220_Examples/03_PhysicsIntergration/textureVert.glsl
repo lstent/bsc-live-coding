@@ -16,6 +16,7 @@ out vec2 vertexTextureCoordOut;
 void main()
 {
 	mat4 MVPMatrix=projectionMatrix*viewMatrix*modelMatrix;
+
 	gl_Position=MVPMatrix*vec4(vertexPosition,1.0f);
 	vertexColourOut=vertexColour;
 	vertexTextureCoordOut=vertexTextureCoord;

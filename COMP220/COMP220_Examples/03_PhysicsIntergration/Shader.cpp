@@ -9,13 +9,15 @@ GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
 // Read the Vertex Shader code from the file
 std::string VertexShaderCode;
 std::ifstream VertexShaderStream(vertex_file_path, std::ios::in);
-if (VertexShaderStream.is_open()) {
+if (VertexShaderStream.is_open()) 
+{
 	std::string Line = "";
 	while (getline(VertexShaderStream, Line))
-		VertexShaderCode += "\n" + Line;
+			VertexShaderCode += "\n" + Line;
 	VertexShaderStream.close();
 }
-else {
+else 
+{
 	printf("Impossible to open %s. Are you in the right directory ? Don't forget to read the FAQ !\n", vertex_file_path);
 	getchar();
 	return 0;
@@ -27,7 +29,7 @@ std::ifstream FragmentShaderStream(fragment_file_path, std::ios::in);
 if (FragmentShaderStream.is_open()) {
 	std::string Line = "";
 	while (getline(FragmentShaderStream, Line))
-		FragmentShaderCode += "\n" + Line;
+			FragmentShaderCode += "\n" + Line;
 	FragmentShaderStream.close();
 }
 
@@ -44,7 +46,8 @@ glCompileShader(VertexShaderID);
 // Check Vertex Shader
 glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
 glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-if (InfoLogLength > 0) {
+if (InfoLogLength > 0) 
+{
 	std::vector<char> VertexShaderErrorMessage(InfoLogLength + 1);
 	glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
 	printf("%s\n", &VertexShaderErrorMessage[0]);
@@ -63,7 +66,8 @@ glCompileShader(FragmentShaderID);
 // Check Fragment Shader
 glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
 glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-if (InfoLogLength > 0) {
+if (InfoLogLength > 0) 
+{
 	std::vector<char> FragmentShaderErrorMessage(InfoLogLength + 1);
 	glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
 	printf("%s\n", &FragmentShaderErrorMessage[0]);

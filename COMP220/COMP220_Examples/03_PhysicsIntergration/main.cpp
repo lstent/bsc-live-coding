@@ -14,6 +14,7 @@ int main(int argc, char* args[])
 		return 1;
 	}
 
+	//Load in the Giraffe JPG texture
 	IMG_Init(IMG_INIT_JPG | IMG_INIT_PNG);
 
 	//Create a window, note we have to free the pointer returned using the DestroyWindow Function
@@ -52,37 +53,16 @@ int main(int argc, char* args[])
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, (char*)glewGetErrorString(glewError), "GLEW Init Failed", NULL);
 	}
 
-	//loadModelFromFile("cube.nff", );
-
-	GLuint VertexArrayID;
-	glGenVertexArrays(1, &VertexArrayID);
-	glBindVertexArray(VertexArrayID);
-
-	// This will identify our vertex buffer
-	GLuint vertexbuffer;
-	// Generate 1 buffer, put the resulting identifier in vertexbuffer
-	glGenBuffers(1, &vertexbuffer);
-	// The following commands will talk about our 'vertexbuffer' buffer
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	//Give our vertices to OpenGL
-	//glBufferData(GL_ARRAY_BUFFER, 36 * sizeof(Vertex), triangleVertices, GL_STATIC_DRAW);
-
-	GLuint elementbuffer;
-	glGenBuffers(1, &elementbuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, 36*sizeof(unsigned int),triangleIndices,GL_STATIC_DRAW);
-
 	std::vector<Mesh*> meshes;
 	loadMeshFromFile("Large_Oak_Dark_01.obj", meshes);
-
 	GLuint textureID = loadTextureFromFile("Giraffe.jpg");
 
 	vec3 trianglePosition = vec3(-1.0f, -2.0f, -40.0f);
 	vec3 scalingValue = vec3(0.8, 0.8, 0.8);
+	vec3 triangleRotation = vec3(0.0f, 0.0f, 0.0f);
+
 	mat4 translationMatrix = translate(trianglePosition);
 	mat4 scaleMatrix = scale(scalingValue);
-
-	vec3 triangleRotation = vec3(0.0f, 0.0f, 0.0f);
 	mat4 rotationXMatrix = rotate(triangleRotation.x, vec3(1.0f, 0.0f, 0.0f));
 	mat4 rotationYMatrix = rotate(triangleRotation.y, vec3(0.0f, 1.0f, 0.0f));
 	mat4 rotationZMatrix = rotate(triangleRotation.z, vec3(0.0f, 0.0f, 1.0f));
@@ -96,14 +76,19 @@ int main(int argc, char* args[])
 
 	mat4 viewMatrix = lookAt(cameraPosition, cameraTarget, cameraUp);
 
-	mat4 projectionMatrix = perspective(radians(90.0f), float(800 / 600), 0.1f, 100.0f);
+	mat4 projectionMatrix = perspective(radians(90.0f), float(800 / 640), 0.1f, 100.0f);
 
 	//light
+	vec4 ambientLightColour = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	vec3 lightDirection = vec3(0.0f, 0.0f, 1.0f);
 	vec4 diffuseLightColour = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	vec4 specularLightColour = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	//material
-	vec4 diffuseMaterialColour = vec4(0.8f, 0.8f, 0.8f, 1.0f);
+	vec4 ambientMaterialColour = vec4(0.1f, 0.1f, 0.1f, 1.0f);
+	vec4 diffuseMaterialColour = vec4(0.6f, 0.6f, 0.6f, 1.0f);
+	vec4 specularMaterialColour = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	float specularPower = 25.0f;
 
 	glm::mat4 mvp = projectionMatrix * viewMatrix * modelMatrix;
 
@@ -129,21 +114,37 @@ int main(int argc, char* args[])
 
 	// Give our vertices to OpenGL.
 	//glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
-
 	GLuint programID = LoadShaders("lightingVert.glsl", "lightingFrag.glsl");
-	if (programID < 0)
+	
+	GLint fragColourLocation = glGetUniformLocation(programID, "fragColour");
+	if (fragColourLocation < 0)
 	{
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, (char*)glewGetErrorString(glewError), "LoadShaders Failed", NULL);
+		printf("Unable to find %s uniform\n", "fragColour");
 	}	
 
-	GLuint timeLocation = glGetUniformLocation(programID, "time");
+	static const GLfloat fragColour[] = { 0.0f,1.0f,0.0f,1.0f };
+
+	GLuint currentTimeLocation = glGetUniformLocation(programID, "time");
+	if (currentTimeLocation < 0)
+	{
+		printf("Unable to find %s uniform\n", "time");
+	}
+
 	GLint modelMatrixLocation = glGetUniformLocation(programID, "modelMatrix");
 	GLint viewMatrixLocation = glGetUniformLocation(programID, "viewMatrix");
 	GLint projectionMatrixLocation = glGetUniformLocation(programID, "projectionMatrix");
 	GLint textureLocation = glGetUniformLocation(programID, "baseTexture");
+	GLint cameraPositionLocation = glGetUniformLocation(programID, "cameraPosition");
+
 	GLint lightDirectionLocation = glGetUniformLocation(programID, "lightDirection");
+	GLint ambientLightColourLocation = glGetUniformLocation(programID, "ambientLightColour");
 	GLint diffuseLightColourLocation = glGetUniformLocation(programID, "diffuseLightColour");
+	GLint specularLightColourLocation = glGetUniformLocation(programID, "specularLightColour");
+
+	GLint ambientMaterialColourLocation = glGetUniformLocation(programID, "ambientMaterialColour");
 	GLint diffuseMaterialColourLocation = glGetUniformLocation(programID, "diffuseMaterialColour");
+	GLint specularMaterialColourLocation = glGetUniformLocation(programID, "specularMaterialColour");
+	GLint specularPowerLocation = glGetUniformLocation(programID, "specularPower");
 
 	//setup post-processing
 	//GLuint colourBufferTextureID = createTexture(700, 700);
@@ -183,7 +184,7 @@ int main(int argc, char* args[])
 
 	btDiscreteDynamicsWorld* dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 
-	dynamicsWorld->setGravity(btVector3(0, -10, 0));
+	dynamicsWorld->setGravity(btVector3(0, -1, 0));
 
 	//the ground is a cube of side 100 at position y = -56.
 	//the sphere will hit it at y = -6, with center at -5
@@ -254,14 +255,14 @@ int main(int argc, char* args[])
 				{
 					//W key
 				case SDLK_w:
-					cameraPosition.z += 0.1;
-					cameraTarget.z += 0.1;
+					cameraPosition.z -= 0.1;
+					cameraTarget.z -= 0.1;
 					break;
 
 					//S key
 				case SDLK_s:
-					cameraPosition.z -= 0.1;
-					cameraTarget.z -= 0.1;
+					cameraPosition.z += 0.1;
+					cameraTarget.z += 0.1;
 					break;
 
 					//A key
@@ -313,7 +314,7 @@ int main(int argc, char* args[])
 
 		viewMatrix = lookAt(cameraPosition,cameraPosition + direction, cameraUp);
 
-		float currentTicks = SDL_GetTicks();
+		currentTicks = SDL_GetTicks();
 		float deltaTime = (float)(currentTicks - lastTicks) / 1000.0f;
 
 		dynamicsWorld->stepSimulation(1.f / 60.f, 10);
@@ -335,28 +336,34 @@ int main(int argc, char* args[])
 		modelMatrix = translationMatrix*rotationMatrix*scaleMatrix;
 
 		//Do rendering here
-		glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClearDepth(1.0f);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, textureID);
 
-		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementbuffer);
-
 		glUseProgram(programID);
 
+		glUniform4fv(fragColourLocation, 1, fragColour);
+		glUniform1f(currentTimeLocation, (float)(currentTicks) / 1000.0f);
 		glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, value_ptr(modelMatrix));
 		glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, value_ptr(viewMatrix));
 		glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, value_ptr(projectionMatrix));
-		glUniform1f(timeLocation, (float)(currentTicks) / 1000.0f);
+		
+		glUniform3fv(cameraPositionLocation,1,value_ptr(cameraPosition));
+
 		glUniform1i(textureLocation, 0);
 
 		glUniform3fv(lightDirectionLocation,1,value_ptr(lightDirection));
+		glUniform4fv(ambientLightColourLocation, 1, value_ptr(ambientLightColour));
 		glUniform4fv(diffuseLightColourLocation, 1, value_ptr(diffuseLightColour));
+		glUniform4fv(specularLightColourLocation, 1, value_ptr(specularLightColour));
 
+		glUniform4fv(ambientMaterialColourLocation, 1, value_ptr(ambientMaterialColour));
 		glUniform4fv(diffuseMaterialColourLocation,1,value_ptr(diffuseMaterialColour));
+		glUniform4fv(specularMaterialColourLocation, 1, value_ptr(specularMaterialColour));
+		glUniform1f(specularPowerLocation, specularPower);
 
 		for (Mesh *pMesh : meshes)
 		{
@@ -365,7 +372,7 @@ int main(int argc, char* args[])
 
 		SDL_GL_SwapWindow(window);
 
-		//lastTicks = currentTicks;
+		lastTicks = currentTicks;
 	}
 
 	dynamicsWorld->removeRigidBody(nutRigidBody);
@@ -408,9 +415,7 @@ int main(int argc, char* args[])
 	}
 
 	meshes.clear();
-	glDeleteVertexArrays(1, &VertexArrayID);
-	glDeleteBuffers(1, &vertexbuffer);
-	glDeleteBuffers(1, &elementbuffer);
+
 	glDeleteTextures(1, &textureID);
 	glDeleteProgram(programID);
 
