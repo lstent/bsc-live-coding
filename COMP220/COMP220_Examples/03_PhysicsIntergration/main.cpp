@@ -90,6 +90,52 @@ int main(int argc, char* args[])
 	vec4 specularMaterialColour = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	float specularPower = 25.0f;
 
+	//colour buffer texture
+	GLuint colourBufferID = createTexture(700, 700);
+
+	//create depth buffer
+	GLuint depthRenderBufferID;
+	glGenRenderbuffers(1, &depthRenderBufferID);
+	glBindRenderbuffer(GL_RENDERBUFFER, depthRenderBufferID);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, 700, 700);
+
+	//create framebuffer
+	GLuint frameBufferID;
+	glGenFramebuffers(1, &frameBufferID);
+	glBindFramebuffer(GL_FRAMEBUFFER, frameBufferID);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRenderBufferID);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, colourBufferID, 0);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	{
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "unable to create frame buffer for post processing", "Frame buffer error", NULL);
+	}
+
+	//create screen alligned quad
+	GLfloat screenVerts[] =
+	{
+		-1, -1,
+		1, -1,
+		-1, 1,
+		1, 1
+	};
+
+	GLuint screenQuadVBOID;
+	glGenBuffers(1, &screenQuadVBOID);
+	glBindBuffer(GL_ARRAY_BUFFER, screenQuadVBOID);
+	glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(GLfloat), screenVerts, GL_STATIC_DRAW);
+
+	GLuint screenVAO;
+	glGenVertexArrays(1, &screenVAO);
+	glBindVertexArray(screenVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, screenQuadVBOID);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	GLuint postProcessingProgramID = LoadShaders("passThroughVert.glsl", "postBlackAndWhite.glsl");
+	GLint texture0Location = glGetUniformLocation(postProcessingProgramID, "texture0");
+
 	glm::mat4 mvp = projectionMatrix * viewMatrix * modelMatrix;
 
 	// position
@@ -114,7 +160,8 @@ int main(int argc, char* args[])
 
 	// Give our vertices to OpenGL.
 	//glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
-	GLuint programID = LoadShaders("lightingVert.glsl", "lightingFrag.glsl");
+	GLuint programID = LoadShaders("textureVert.glsl", "textureFrag.glsl");
+	//GLuint programID = LoadShaders("lightingVert.glsl", "lightingFrag.glsl");
 	
 	GLint fragColourLocation = glGetUniformLocation(programID, "fragColour");
 	if (fragColourLocation < 0)
@@ -336,6 +383,8 @@ int main(int argc, char* args[])
 		modelMatrix = translationMatrix*rotationMatrix*scaleMatrix;
 
 		//Do rendering here
+		glEnable(GL_DEPTH_TEST);
+		glBindFramebuffer(GL_FRAMEBUFFER, frameBufferID);
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClearDepth(1.0f);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -369,6 +418,22 @@ int main(int argc, char* args[])
 		{
 			pMesh->render();
 		}
+
+		glDisable(GL_DEPTH_TEST);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+
+		//bind post processing shaders
+		glUseProgram(postProcessingProgramID);
+
+		//activate texture unit 0 for the colour buffer
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, colourBufferID);
+		glUniform1i(texture0Location, 0);
+
+		glBindVertexArray(screenVAO);
+		glDrawArrays(GL_TRIANGLE_STRIP,0,4);
 
 		SDL_GL_SwapWindow(window);
 
@@ -414,8 +479,14 @@ int main(int argc, char* args[])
 		}
 	}
 
+	glDeleteProgram(postProcessingProgramID);
+	glDeleteVertexArrays(1, &screenVAO);
+	glDeleteBuffers(1, &screenQuadVBOID);
+	glDeleteFramebuffers(1, &frameBufferID);
+	glDeleteRenderbuffers(1, &depthRenderBufferID);
+	glDeleteTextures(1, &colourBufferID);
+	
 	meshes.clear();
-
 	glDeleteTextures(1, &textureID);
 	glDeleteProgram(programID);
 
