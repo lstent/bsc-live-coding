@@ -53,29 +53,12 @@ int main(int argc, char* args[])
 		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, (char*)glewGetErrorString(glewError), "GLEW Init Failed", NULL);
 	}
 
-	std::vector<Mesh*> meshes;
-	loadMeshFromFile("Large_Oak_Dark_01.obj", meshes);
-	GLuint textureID = loadTextureFromFile("Giraffe.jpg");
-
-	vec3 trianglePosition = vec3(-1.0f, -2.0f, -40.0f);
-	vec3 scalingValue = vec3(0.8, 0.8, 0.8);
-	vec3 triangleRotation = vec3(0.0f, 0.0f, 0.0f);
-
-	mat4 translationMatrix = translate(trianglePosition);
-	mat4 scaleMatrix = scale(scalingValue);
-	mat4 rotationXMatrix = rotate(triangleRotation.x, vec3(1.0f, 0.0f, 0.0f));
-	mat4 rotationYMatrix = rotate(triangleRotation.y, vec3(0.0f, 1.0f, 0.0f));
-	mat4 rotationZMatrix = rotate(triangleRotation.z, vec3(0.0f, 0.0f, 1.0f));
-	mat4 rotationMatrix = rotationZMatrix*rotationYMatrix*rotationXMatrix;
-
-	mat4 modelMatrix = translationMatrix*rotationMatrix*scaleMatrix;
-
-	vec3 cameraPosition = vec3(0.0f, -25.0f, -5.0f);
+	//Camera
+	vec3 cameraPosition = vec3(0.0f, 2.0f, 10.0f);
 	vec3 cameraTarget = vec3(0.0f, 0.0f, 0.0f);
 	vec3 cameraUp = vec3(0.0f, 1.0f, 0.0f);
 
 	mat4 viewMatrix = lookAt(cameraPosition, cameraTarget, cameraUp);
-
 	mat4 projectionMatrix = perspective(radians(90.0f), float(800 / 640), 0.1f, 100.0f);
 
 	//light
@@ -84,11 +67,39 @@ int main(int argc, char* args[])
 	vec4 diffuseLightColour = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	vec4 specularLightColour = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-	//material
-	vec4 ambientMaterialColour = vec4(0.1f, 0.1f, 0.1f, 1.0f);
-	vec4 diffuseMaterialColour = vec4(0.6f, 0.6f, 0.6f, 1.0f);
-	vec4 specularMaterialColour = vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	float specularPower = 25.0f;
+	std::vector<gameObject*>gameObjectList;
+
+	//Create game object
+	gameObject * pNut = new gameObject();
+	pNut->setPosition(vec3(0.0f, 7.0f, 0.0f));
+	pNut->loadMeshesFromFile("Large_Oak_Dark_01.obj");
+	pNut->loadDiffuseTextureFromFile("Giraffe.jpg");
+	pNut->loadShaderProgram("textureVert.glsl", "textureFrag.glsl");
+	gameObjectList.push_back(pNut);
+
+	gameObject * pShroom = new gameObject();
+	pShroom->setPosition(vec3(5.0f, 0.0f, 0.0f));
+	pShroom->setScale(vec3(7.0f, 7.0f, 7.0f));
+	pShroom->loadMeshesFromFile("Mushroom_Red_01.obj");
+	pShroom->loadDiffuseTextureFromFile("iDunno.jpg");
+	pShroom->loadShaderProgram("textureVert.glsl", "textureFrag.glsl");
+	gameObjectList.push_back(pShroom);
+
+	gameObject * pTree = new gameObject();
+	pTree->setPosition(vec3(-5.0f, 0.0f, 0.0f));
+	pTree->setScale(vec3(7.0f, 7.0f, 7.0f));
+	pTree->loadMeshesFromFile("Oak_Dark_01.obj");
+	pTree->loadDiffuseTextureFromFile("wood.jpg");
+	pTree->loadShaderProgram("textureVert.glsl", "textureFrag.glsl");
+	gameObjectList.push_back(pTree);
+
+	gameObject * pGrass = new gameObject();
+	pGrass->setPosition(vec3(-70.0f, -5.0f, 15.0f));
+	pGrass->setScale(vec3(187.0f, 0.0f, 187.0f));
+	pGrass->loadMeshesFromFile("Plate_Grass_01.obj");
+	pGrass->loadDiffuseTextureFromFile("feather.jpg");
+	pGrass->loadShaderProgram("textureVert.glsl", "textureFrag.glsl");
+	gameObjectList.push_back(pGrass);
 
 	//colour buffer texture
 	GLuint colourBufferID = createTexture(700, 700);
@@ -136,8 +147,6 @@ int main(int argc, char* args[])
 	GLuint postProcessingProgramID = LoadShaders("passThroughVert.glsl", "postBlackAndWhite.glsl");
 	GLint texture0Location = glGetUniformLocation(postProcessingProgramID, "texture0");
 
-	glm::mat4 mvp = projectionMatrix * viewMatrix * modelMatrix;
-
 	// position
 	glm::vec3 position = glm::vec3(0, 0, 5);
 	// horizontal angle : toward -Z
@@ -158,19 +167,7 @@ int main(int argc, char* args[])
 	Uint64 LAST = 0;
 	double deltaTime = 0;
 
-	// Give our vertices to OpenGL.
-	//glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
-	GLuint programID = LoadShaders("textureVert.glsl", "textureFrag.glsl");
-	//GLuint programID = LoadShaders("lightingVert.glsl", "lightingFrag.glsl");
-	
-	GLint fragColourLocation = glGetUniformLocation(programID, "fragColour");
-	if (fragColourLocation < 0)
-	{
-		printf("Unable to find %s uniform\n", "fragColour");
-	}	
-
-	static const GLfloat fragColour[] = { 0.0f,1.0f,0.0f,1.0f };
-
+	/**
 	GLuint currentTimeLocation = glGetUniformLocation(programID, "time");
 	if (currentTimeLocation < 0)
 	{
@@ -191,32 +188,12 @@ int main(int argc, char* args[])
 	GLint ambientMaterialColourLocation = glGetUniformLocation(programID, "ambientMaterialColour");
 	GLint diffuseMaterialColourLocation = glGetUniformLocation(programID, "diffuseMaterialColour");
 	GLint specularMaterialColourLocation = glGetUniformLocation(programID, "specularMaterialColour");
-	GLint specularPowerLocation = glGetUniformLocation(programID, "specularPower");
-
-	//setup post-processing
-	//GLuint colourBufferTextureID = createTexture(700, 700);
-
-	//GLuint depthBufferID;
-	//glGenRenderbuffers(1, &depthBufferID);
-	//glBindRenderbuffer(GL_RENDERBUFFER, depthBufferID);
-	//glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, 700, 700);
-
-	//GLuint frameBufferID;
-	//glGenFramebuffers(1, &frameBufferID);
-	//glBindFramebuffer(GL_FRAMEBUFFER, frameBufferID);
-	//glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, colourBufferTextureID, 0);
-	//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBufferID);
-
-	//if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-	//{
-		//SDL_ShowSimpleMessageBox(SDL_MESSSAGEBOX_ERROR,"unable to create Framebuffer","FramBuffer",)
-	//}
-
+	GLint specularPowerLocation = glGetUniformLocation(programID, "specularPower");*/
 
 	glEnable(GL_DEPTH_TEST);
 	int lastTicks = SDL_GetTicks();
 	int currentTicks = SDL_GetTicks();
-
+	/**
 	///collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
 	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
 
@@ -233,13 +210,13 @@ int main(int argc, char* args[])
 
 	dynamicsWorld->setGravity(btVector3(0, -1, 0));
 
-	//the ground is a cube of side 100 at position y = -56.
+	//the ground is a cube of side 100 at position y = -5.
 	//the sphere will hit it at y = -6, with center at -5
 	btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.), btScalar(1.), btScalar(50.)));
 
 	btTransform groundTransform;
 	groundTransform.setIdentity();
-	groundTransform.setOrigin(btVector3(0, -56, 0));
+	groundTransform.setOrigin(btVector3(-70.0f, -5.0f, 15.0f));
 
 	btScalar mass(0.);
 	btVector3 localInertia(0, 0, 0);
@@ -268,7 +245,7 @@ int main(int argc, char* args[])
 	btRigidBody::btRigidBodyConstructionInfo nutRbInfo(nutMass, nutMotionState, nutCollisionShape, nutInertia);
 	btRigidBody* nutRigidBody = new btRigidBody(nutRbInfo);
 
-	dynamicsWorld->addRigidBody(nutRigidBody);
+	dynamicsWorld->addRigidBody(nutRigidBody);*/
 
 	//Event loop, we will loop until running is set to false, usually if escape has been pressed or window is closed
 	bool running = true;
@@ -364,23 +341,17 @@ int main(int argc, char* args[])
 		currentTicks = SDL_GetTicks();
 		float deltaTime = (float)(currentTicks - lastTicks) / 1000.0f;
 
-		dynamicsWorld->stepSimulation(1.f / 60.f, 10);
-		nutTransform = nutRigidBody->getWorldTransform();
-		btVector3 nutOrigin = nutTransform.getOrigin();
-		btQuaternion nutRotation = nutTransform.getRotation();
+		//pNut->update();
 
-		trianglePosition = vec3(nutOrigin.getX(), nutOrigin.getY(), nutOrigin.getZ());
+		for (gameObject*pObj : gameObjectList)
+		{
+			pObj->update();
+		}
 
-		translationMatrix = translate(trianglePosition);
-		scaleMatrix = scale(scalingValue);
-
-		vec3 triangleRotation = vec3(0.0f, 0.0f, 0.0f);
-		rotationXMatrix = rotate(triangleRotation.x, vec3(1.0f, 0.0f, 0.0f));
-		rotationYMatrix = rotate(triangleRotation.y, vec3(0.0f, 1.0f, 0.0f));
-		rotationZMatrix = rotate(triangleRotation.z, vec3(0.0f, 0.0f, 1.0f));
-		rotationMatrix = rotationZMatrix*rotationYMatrix*rotationXMatrix;
-
-		modelMatrix = translationMatrix*rotationMatrix*scaleMatrix;
+		//dynamicsWorld->stepSimulation(1.f / 60.f, 10);
+		//nutTransform = nutRigidBody->getWorldTransform();
+		//btVector3 nutOrigin = nutTransform.getOrigin();
+		//btQuaternion nutRotation = nutTransform.getRotation();
 
 		//Do rendering here
 		glEnable(GL_DEPTH_TEST);
@@ -389,11 +360,25 @@ int main(int argc, char* args[])
 		glClearDepth(1.0f);
 		glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, textureID);
+		for (gameObject*pObj : gameObjectList)
+		{
 
-		glUseProgram(programID);
+			pObj->preRender();
+			GLuint currentProgramID = pObj->getShaderProgramID();
 
+			//Retreive the shader values
+			GLint viewMatrixLocation = glGetUniformLocation(currentProgramID, "viewMatrix");
+			GLint projectionMatrixLocation = glGetUniformLocation(currentProgramID, "projectionMatrix");
+
+			//Send shader values
+			glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, value_ptr(projectionMatrix));
+			glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, value_ptr(viewMatrix));
+
+			pObj->render();
+
+		}
+
+		/*
 		glUniform4fv(fragColourLocation, 1, fragColour);
 		glUniform1f(currentTimeLocation, (float)(currentTicks) / 1000.0f);
 		glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, value_ptr(modelMatrix));
@@ -412,12 +397,9 @@ int main(int argc, char* args[])
 		glUniform4fv(ambientMaterialColourLocation, 1, value_ptr(ambientMaterialColour));
 		glUniform4fv(diffuseMaterialColourLocation,1,value_ptr(diffuseMaterialColour));
 		glUniform4fv(specularMaterialColourLocation, 1, value_ptr(specularMaterialColour));
-		glUniform1f(specularPowerLocation, specularPower);
+		glUniform1f(specularPowerLocation, specularPower);*/
 
-		for (Mesh *pMesh : meshes)
-		{
-			pMesh->render();
-		}
+		//Draw stuff here
 
 		glDisable(GL_DEPTH_TEST);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -440,6 +422,7 @@ int main(int argc, char* args[])
 		lastTicks = currentTicks;
 	}
 
+	/*
 	dynamicsWorld->removeRigidBody(nutRigidBody);
 	delete nutCollisionShape;
 	delete nutRigidBody->getMotionState();
@@ -462,33 +445,24 @@ int main(int argc, char* args[])
 	//delete dispatcher
 	delete dispatcher;
 
-	delete collisionConfiguration;
+	delete collisionConfiguration;*/
 
-	//GLDelete(1, &)
-	auto iter = meshes.begin();
-	while (iter != meshes.end())
+	auto gameObjectIter = gameObjectList.begin();
+	while (gameObjectIter != gameObjectList.end())
 	{
-		if ((*iter))
+		if ((*gameObjectIter))
 		{
-			delete (*iter);
-			iter = meshes.erase(iter);
-		}
-		else
-		{
-			iter++;
+			(*gameObjectIter)->destroy();
+			delete(*gameObjectIter);
+			gameObjectIter = gameObjectList.erase(gameObjectIter);
 		}
 	}
-
 	glDeleteProgram(postProcessingProgramID);
 	glDeleteVertexArrays(1, &screenVAO);
 	glDeleteBuffers(1, &screenQuadVBOID);
 	glDeleteFramebuffers(1, &frameBufferID);
 	glDeleteRenderbuffers(1, &depthRenderBufferID);
 	glDeleteTextures(1, &colourBufferID);
-	
-	meshes.clear();
-	glDeleteTextures(1, &textureID);
-	glDeleteProgram(programID);
 
 	SDL_GL_DeleteContext(GL_Context);
 	//Destroy the window and quit SDL2, NB we should do this after all cleanup in this order!!!

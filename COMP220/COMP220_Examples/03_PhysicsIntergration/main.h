@@ -19,4 +19,6 @@
 #include "Texture.h"
 #include "Model.h"
 
+#include "gameObject.h"
+
 using namespace glm;

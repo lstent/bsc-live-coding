@@ -4,7 +4,7 @@ in vec4 vertexColourOut;
 
 out vec4 colour;
 
-uniform vec4 fragColour=vec4(1.0,1.0,1.0,1.0);
+uniform vec4 fragColour=vec4(0.0,1.0,1.0,1.0);
 
 void main()
 {
