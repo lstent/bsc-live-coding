@@ -7,7 +7,6 @@
 #include <glm\gtx\transform.hpp>
 #include <glm\gtc\type_ptr.hpp>
 
-#include "Mesh.h"
 #include "Model.h"
 #include "Texture.h"
 #include "Shader.h"
@@ -21,53 +20,72 @@ public:
 	void loadMeshesFromFile(const std::string& filename);
 	void loadDiffuseTextureFromFile(const std::string& filename);
 	void loadShaderProgram(const std::string& vertexShaderFileName, const std::string& fragmentShaderFileName);
-	
-	void update();
+
 	void destroy();
 	void preRender();
 	void render();
 
-	//Sets the position of the game object
-	void setPosition(const glm::vec3& position)
+	class transform
 	{
-		m_Position = position;
-	};
+	public:
+		transform();
+		transform(gameObject*gameObjectsRef) : gameObjectsRef(gameObjectsRef) {}
+		~transform();
+		void update();
+		float m_XPosition;
+		float m_YPosition;
+		float m_ZPosition;
 
-	//Gets the position
-	const glm::vec3& getPosition()
-	{
-		return m_Position;
-	};
+		//Sets the position of the game object
+		void setPosition(const glm::vec3& position)
+		{
+			m_Position = position;
+		};
 
-	//Sets the scale of the game object
-	void setScale(const glm::vec3& scale)
-	{
-		m_Scale = scale;
-	};
+		//Gets the position
+		const glm::vec3& getPosition()
+		{
+			return m_Position;
+		};
 
-	//Gets the scale
-	const glm::vec3& getScale()
-	{
-		return m_Scale;
-	};
+		//Sets the scale of the game object
+		void setScale(const glm::vec3& scale)
+		{
+			m_Scale = scale;
+		};
 
-	//Sets the rotation of the game object
-	void setRotation(const glm::vec3& rotation)
-	{
-		m_Rotation = rotation;
-	};
+		//Gets the scale
+		const glm::vec3& getScale()
+		{
+			return m_Scale;
+		};
 
-	//Gets the rotation
-	const glm::vec3& getRotation()
-	{
-		return m_Rotation;
-	};
+		//Sets the rotation of the game object
+		void setRotation(const glm::vec3& rotation)
+		{
+			m_Rotation = rotation;
+		};
 
-	//Gets the modelMatrix
-	const glm::mat4& getModelMatrix()
-	{
-		return m_ModelMatrix;
-	};
+		//Gets the rotation
+		const glm::vec3& getRotation()
+		{
+			return m_Rotation;
+		};
+
+		//Gets the modelMatrix
+		const glm::mat4& getModelMatrix()
+		{
+			return m_ModelMatrix;
+		};
+	private:
+		gameObject* gameObjectsRef;
+
+		//Transform
+		glm::vec3 m_Position;
+		glm::vec3 m_Scale;
+		glm::vec3 m_Rotation;
+		glm::mat4 m_ModelMatrix;
+	}transform;
 
 	//Gets the diffuseMap
 	const GLuint getDiffuseMap()
@@ -129,12 +147,6 @@ public:
 private:
 	//The visable mesh
 	std::vector<Mesh*> m_Meshes;
-
-	//Transform
-	glm::vec3 m_Position;
-	glm::vec3 m_Scale;
-	glm::vec3 m_Rotation;
-	glm::mat4 m_ModelMatrix;
 
 	//Textures
 	GLuint m_DiffuseMap;

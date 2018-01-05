@@ -71,31 +71,31 @@ int main(int argc, char* args[])
 
 	//Create game object
 	gameObject * pNut = new gameObject();
-	pNut->setPosition(vec3(0.0f, 7.0f, 0.0f));
+	pNut->transform.setPosition(vec3(0.0f, 7.0f, 0.0f));
 	pNut->loadMeshesFromFile("Large_Oak_Dark_01.obj");
 	pNut->loadDiffuseTextureFromFile("Giraffe.jpg");
 	pNut->loadShaderProgram("textureVert.glsl", "textureFrag.glsl");
 	gameObjectList.push_back(pNut);
 
 	gameObject * pShroom = new gameObject();
-	pShroom->setPosition(vec3(5.0f, 0.0f, 0.0f));
-	pShroom->setScale(vec3(7.0f, 7.0f, 7.0f));
+	pShroom->transform.setPosition(vec3(5.0f, 0.0f, 0.0f));
+	pShroom->transform.setScale(vec3(7.0f, 7.0f, 7.0f));
 	pShroom->loadMeshesFromFile("Mushroom_Red_01.obj");
 	pShroom->loadDiffuseTextureFromFile("iDunno.jpg");
 	pShroom->loadShaderProgram("textureVert.glsl", "textureFrag.glsl");
 	gameObjectList.push_back(pShroom);
 
 	gameObject * pTree = new gameObject();
-	pTree->setPosition(vec3(-5.0f, 0.0f, 0.0f));
-	pTree->setScale(vec3(7.0f, 7.0f, 7.0f));
+	pTree->transform.setPosition(vec3(-5.0f, 0.0f, 0.0f));
+	pTree->transform.setScale(vec3(7.0f, 7.0f, 7.0f));
 	pTree->loadMeshesFromFile("Oak_Dark_01.obj");
 	pTree->loadDiffuseTextureFromFile("wood.jpg");
 	pTree->loadShaderProgram("textureVert.glsl", "textureFrag.glsl");
 	gameObjectList.push_back(pTree);
 
 	gameObject * pGrass = new gameObject();
-	pGrass->setPosition(vec3(-70.0f, -5.0f, 15.0f));
-	pGrass->setScale(vec3(187.0f, 0.0f, 187.0f));
+	pGrass->transform.setPosition(vec3(-70.0f, -5.0f, 15.0f));
+	pGrass->transform.setScale(vec3(187.0f, 0.0f, 187.0f));
 	pGrass->loadMeshesFromFile("Plate_Grass_01.obj");
 	pGrass->loadDiffuseTextureFromFile("feather.jpg");
 	pGrass->loadShaderProgram("textureVert.glsl", "textureFrag.glsl");
@@ -161,39 +161,14 @@ int main(int argc, char* args[])
 
 	int xpos=0, ypos=0;
 
-
-
 	Uint64 NOW = SDL_GetPerformanceCounter();
 	Uint64 LAST = 0;
 	double deltaTime = 0;
 
-	/**
-	GLuint currentTimeLocation = glGetUniformLocation(programID, "time");
-	if (currentTimeLocation < 0)
-	{
-		printf("Unable to find %s uniform\n", "time");
-	}
-
-	GLint modelMatrixLocation = glGetUniformLocation(programID, "modelMatrix");
-	GLint viewMatrixLocation = glGetUniformLocation(programID, "viewMatrix");
-	GLint projectionMatrixLocation = glGetUniformLocation(programID, "projectionMatrix");
-	GLint textureLocation = glGetUniformLocation(programID, "baseTexture");
-	GLint cameraPositionLocation = glGetUniformLocation(programID, "cameraPosition");
-
-	GLint lightDirectionLocation = glGetUniformLocation(programID, "lightDirection");
-	GLint ambientLightColourLocation = glGetUniformLocation(programID, "ambientLightColour");
-	GLint diffuseLightColourLocation = glGetUniformLocation(programID, "diffuseLightColour");
-	GLint specularLightColourLocation = glGetUniformLocation(programID, "specularLightColour");
-
-	GLint ambientMaterialColourLocation = glGetUniformLocation(programID, "ambientMaterialColour");
-	GLint diffuseMaterialColourLocation = glGetUniformLocation(programID, "diffuseMaterialColour");
-	GLint specularMaterialColourLocation = glGetUniformLocation(programID, "specularMaterialColour");
-	GLint specularPowerLocation = glGetUniformLocation(programID, "specularPower");*/
-
 	glEnable(GL_DEPTH_TEST);
 	int lastTicks = SDL_GetTicks();
 	int currentTicks = SDL_GetTicks();
-	/**
+	/*
 	///collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
 	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
 
@@ -238,7 +213,7 @@ int main(int argc, char* args[])
 	// Create Dynamic Objects
 	btTransform nutTransform;
 	nutTransform.setIdentity();
-	nutTransform.setOrigin(btVector3(trianglePosition.x, trianglePosition.y, trianglePosition.z));
+	nutTransform.setOrigin(btVector3(pNut->transform.getPosition.m_XPosition, pNut->transform.getPosition.m_YPosition, pNut->transform.getPosition.m_ZPosition));
 
 	//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
 	btDefaultMotionState* nutMotionState = new btDefaultMotionState(nutTransform);
@@ -264,8 +239,6 @@ int main(int argc, char* args[])
 			//Switch case for every message we are intereted in
 			switch (ev.type)
 			{
-			//case SDL_MOUSEMOTION:
-				//break;
 
 				//QUIT Message, usually called when the window has been closed
 			case SDL_QUIT:
@@ -341,11 +314,9 @@ int main(int argc, char* args[])
 		currentTicks = SDL_GetTicks();
 		float deltaTime = (float)(currentTicks - lastTicks) / 1000.0f;
 
-		//pNut->update();
-
 		for (gameObject*pObj : gameObjectList)
 		{
-			pObj->update();
+			pObj->transform.update();
 		}
 
 		//dynamicsWorld->stepSimulation(1.f / 60.f, 10);
@@ -378,29 +349,7 @@ int main(int argc, char* args[])
 
 		}
 
-		/*
-		glUniform4fv(fragColourLocation, 1, fragColour);
-		glUniform1f(currentTimeLocation, (float)(currentTicks) / 1000.0f);
-		glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, value_ptr(modelMatrix));
-		glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, value_ptr(viewMatrix));
-		glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, value_ptr(projectionMatrix));
-		
-		glUniform3fv(cameraPositionLocation,1,value_ptr(cameraPosition));
-
-		glUniform1i(textureLocation, 0);
-
-		glUniform3fv(lightDirectionLocation,1,value_ptr(lightDirection));
-		glUniform4fv(ambientLightColourLocation, 1, value_ptr(ambientLightColour));
-		glUniform4fv(diffuseLightColourLocation, 1, value_ptr(diffuseLightColour));
-		glUniform4fv(specularLightColourLocation, 1, value_ptr(specularLightColour));
-
-		glUniform4fv(ambientMaterialColourLocation, 1, value_ptr(ambientMaterialColour));
-		glUniform4fv(diffuseMaterialColourLocation,1,value_ptr(diffuseMaterialColour));
-		glUniform4fv(specularMaterialColourLocation, 1, value_ptr(specularMaterialColour));
-		glUniform1f(specularPowerLocation, specularPower);*/
-
 		//Draw stuff here
-
 		glDisable(GL_DEPTH_TEST);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -469,7 +418,7 @@ int main(int argc, char* args[])
 	//https://wiki.libsdl.org/SDL_DestroyWindow
 	SDL_DestroyWindow(window);
 	//Unload image
-	IMG_Quit;
+	IMG_Quit();
 	//https://wiki.libsdl.org/SDL_Quit
 	SDL_Quit();
 

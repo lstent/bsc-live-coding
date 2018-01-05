@@ -2,10 +2,10 @@
 
 gameObject::gameObject()
 {
-	m_Position = glm::vec3(0.0f, 0.0f, 0.0f);
-	m_Scale = glm::vec3(0.6, 0.6, 0.6);
-	m_Rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-	m_ModelMatrix = glm::mat4(1.0f);
+	//m_Position = glm::vec3(0.0f, 0.0f, 0.0f);
+	//m_Scale = glm::vec3(0.6, 0.6, 0.6);
+	//m_Rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+	//m_ModelMatrix = glm::mat4(1.0f);
 
 	m_DiffuseMap = 0;
 
@@ -21,17 +21,22 @@ gameObject::~gameObject()
 {
 }
 
-void gameObject::loadMeshesFromFile(const std::string & fileName)
+gameObject::transform::transform()
 {
-	loadMeshFromFile(fileName, m_Meshes);
+	m_XPosition = float(0.0f);
+	m_YPosition = float(0.0f);
+	m_ZPosition = float(0.0f);
+	m_Position = glm::vec3(m_XPosition, m_YPosition, m_ZPosition);
+	m_Scale = glm::vec3(0.6, 0.6, 0.6);
+	m_Rotation = glm::vec3(0.0f, 0.0f, 0.0f);
+	m_ModelMatrix = glm::mat4(1.0f);
 }
 
-void gameObject::loadDiffuseTextureFromFile(const std::string & filename)
+gameObject::transform::~transform()
 {
-	m_DiffuseMap = loadTextureFromFile(filename);
 }
 
-void gameObject::update()
+void gameObject::transform::update()
 {
 	glm::mat4 translationMatrix = glm::translate(m_Position);
 	glm::mat4 scaleMatrix = glm::scale(m_Scale);
@@ -41,6 +46,16 @@ void gameObject::update()
 	glm::mat4 rotationMatrix = rotationZMatrix*rotationYMatrix*rotationXMatrix;
 
 	m_ModelMatrix = translationMatrix*rotationMatrix*scaleMatrix;
+}
+
+void gameObject::loadMeshesFromFile(const std::string & fileName)
+{
+	loadMeshFromFile(fileName, m_Meshes);
+}
+
+void gameObject::loadDiffuseTextureFromFile(const std::string & filename)
+{
+	m_DiffuseMap = loadTextureFromFile(filename);
 }
 
 void gameObject::loadShaderProgram(const std::string & vertexShaderFileName, const std::string & fragmentShaderFileName)
@@ -70,7 +85,6 @@ void gameObject::destroy()
 void gameObject::preRender()
 {
 	glUseProgram(m_ShaderProgramID);
-
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_DiffuseMap);
 
@@ -82,7 +96,7 @@ void gameObject::preRender()
 	GLint specularMaterialColourLocation = glGetUniformLocation(m_ShaderProgramID, "specularMaterialColour");
 	GLint specularPowerLocation = glGetUniformLocation(m_ShaderProgramID, "specularPower");
 
-	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, value_ptr(m_ModelMatrix));
+	glUniformMatrix4fv(modelMatrixLocation, 1, GL_FALSE, value_ptr(transform.getModelMatrix()));
 
 	glUniform1i(textureLocation, 0);
 
