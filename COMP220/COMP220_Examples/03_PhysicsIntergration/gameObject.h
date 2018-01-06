@@ -87,11 +87,12 @@ public:
 		glm::mat4 m_ModelMatrix;
 	}transform;
 
-	//Gets the diffuseMap
-	const GLuint getDiffuseMap()
+	class material
 	{
-		return m_DiffuseMap;
-	};
+	public:
+			material();
+			material(gameObject*gameObjectsRef) : gameObjectsRef(gameObjectsRef) {}
+			~material();
 
 	//Sets the ambient material colour for the game object
 	void setAmbientMaterialColour(const glm::vec4& colour)
@@ -126,6 +127,23 @@ public:
 		return m_SpecularMaterialColour;
 	};
 
+
+	private:
+		gameObject* gameObjectsRef;
+
+		//material
+		glm::vec4 m_AmbientMaterialColour;
+		glm::vec4 m_DiffuseMaterialColour;
+		glm::vec4 m_SpecularMaterialColour;
+
+	}material;
+
+	//Gets the diffuseMap
+	const GLuint getDiffuseMap()
+	{
+		return m_DiffuseMap;
+	};
+
 	//Sets the specular power for the game object
 	void setSpecularPower(const float power)
 	{
@@ -152,9 +170,9 @@ private:
 	GLuint m_DiffuseMap;
 
 	//material
-	glm::vec4 m_AmbientMaterialColour;
-	glm::vec4 m_DiffuseMaterialColour;
-	glm::vec4 m_SpecularMaterialColour;
+	//glm::vec4 m_AmbientMaterialColour;
+	//glm::vec4 m_DiffuseMaterialColour;
+	//glm::vec4 m_SpecularMaterialColour;
 	float m_SpecularPower;
 
 	GLuint m_ShaderProgramID;

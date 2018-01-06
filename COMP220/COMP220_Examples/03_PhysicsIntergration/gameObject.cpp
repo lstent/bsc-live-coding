@@ -2,16 +2,9 @@
 
 gameObject::gameObject()
 {
-	//m_Position = glm::vec3(0.0f, 0.0f, 0.0f);
-	//m_Scale = glm::vec3(0.6, 0.6, 0.6);
-	//m_Rotation = glm::vec3(0.0f, 0.0f, 0.0f);
-	//m_ModelMatrix = glm::mat4(1.0f);
 
 	m_DiffuseMap = 0;
 
-	m_AmbientMaterialColour = glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
-	m_DiffuseMaterialColour = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
-	m_SpecularMaterialColour = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	m_SpecularPower = 25.0f;
 
 	m_ShaderProgramID = 0;
@@ -82,6 +75,17 @@ void gameObject::destroy()
 	}
 }
 
+gameObject::material::material()
+{
+	m_AmbientMaterialColour = glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
+	m_DiffuseMaterialColour = glm::vec4(0.6f, 0.6f, 0.6f, 1.0f);
+	m_SpecularMaterialColour = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+}
+
+gameObject::material::~material()
+{
+}
+
 void gameObject::preRender()
 {
 	glUseProgram(m_ShaderProgramID);
@@ -100,10 +104,10 @@ void gameObject::preRender()
 
 	glUniform1i(textureLocation, 0);
 
-	glUniform4fv(ambientMaterialColourLocation, 1, value_ptr(m_AmbientMaterialColour));
-	glUniform4fv(diffuseMaterialColourLocation, 1, value_ptr(m_DiffuseMaterialColour));
-	glUniform4fv(specularMaterialColourLocation, 1, value_ptr(m_SpecularMaterialColour));
-	glUniform1f(specularPowerLocation, m_SpecularPower);
+	glUniform4fv(ambientMaterialColourLocation, 1, value_ptr(material.getAmbientMaterialColour()));
+	glUniform4fv(diffuseMaterialColourLocation, 1, value_ptr(material.getDiffuseMaterialColour()));
+	glUniform4fv(specularMaterialColourLocation, 1, value_ptr(material.getspecularMaterialColour()));
+	glUniform1f(specularPowerLocation, getSpecularPower());
 }
 
 void gameObject::render()
