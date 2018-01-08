@@ -75,7 +75,7 @@ int main(int argc, char* args[])
 	pNut->loadMeshesFromFile("Large_Oak_Dark_01.obj");
 	pNut->loadDiffuseTextureFromFile("Giraffe.jpg");
 	pNut->loadShaderProgram("textureVert.glsl", "textureFrag.glsl");
-	pNut->collision.collisionBox(2,2,2);
+	pNut->collision.collisionBox(0.5,0.5,0.5);
 	pNut->collision.mass(1.0f);
 	pNut->collision.inertia(0,0,0);
 	pNut->collision.startCollision(0.0f, 7.0f, 0.0f);
@@ -87,10 +87,10 @@ int main(int argc, char* args[])
 	pShroom->loadMeshesFromFile("Mushroom_Red_01.obj");
 	pShroom->loadDiffuseTextureFromFile("iDunno.jpg");
 	pShroom->loadShaderProgram("textureVert.glsl", "textureFrag.glsl");
-	pNut->collision.collisionBox(7.0f, 7.0f, 7.0f);
-	pNut->collision.mass(1.0f);
-	pNut->collision.inertia(0, 0, 0);
-	pNut->collision.startCollision(5.0f, 0.0f, 0.0f);
+	pShroom->collision.collisionBox(0.0f, 0.0f, 0.0f);
+	pShroom->collision.mass(0.0f);
+	pShroom->collision.inertia(0, 0, 0);
+	pShroom->collision.startCollision(5.0f, 0.0f, 0.0f);
 	gameObjectList.push_back(pShroom);
 
 	gameObject * pTree = new gameObject();
@@ -99,22 +99,22 @@ int main(int argc, char* args[])
 	pTree->loadMeshesFromFile("Oak_Dark_01.obj");
 	pTree->loadDiffuseTextureFromFile("wood.jpg");
 	pTree->loadShaderProgram("textureVert.glsl", "textureFrag.glsl");
-	pNut->collision.collisionBox(7.0f, 7.0f, 7.0f);
-	pNut->collision.mass(1.0f);
-	pNut->collision.inertia(0, 0, 0);
-	pNut->collision.startCollision(-5.0f, 0.0f, 0.0f);
+	pTree->collision.collisionBox(0.0f, 0.0f, 0.0f);
+	pTree->collision.mass(0.0f);
+	pTree->collision.inertia(0, 0, 0);
+	pTree->collision.startCollision(-5.0f, 0.0f, 0.0f);
 	gameObjectList.push_back(pTree);
 
 	gameObject * pGrass = new gameObject();
-	pGrass->transform.setPosition(vec3(-70.0f, -5.0f, 15.0f));
+	pGrass->transform.setPosition(vec3(-70.0f, 0.0f, 15.0f));
 	pGrass->transform.setScale(vec3(187.0f, 1.0f, 187.0f));
 	pGrass->loadMeshesFromFile("Plate_Grass_01.obj");
 	pGrass->loadDiffuseTextureFromFile("feather.jpg");
 	pGrass->loadShaderProgram("textureVert.glsl", "textureFrag.glsl");
-	pNut->collision.collisionBox(187.0f, 1.0f, 187.0f);
-	pNut->collision.mass(1.0f);
-	pNut->collision.inertia(0, 0, 0);
-	pNut->collision.startCollision(-70.0f, -5.0f, 15.0f);
+	pGrass->collision.collisionBox(187.0f, 0.0f, 187.0f);
+	pGrass->collision.mass(0.0f);
+	pGrass->collision.inertia(0, 0, 0);
+	pGrass->collision.startCollision(-70.0f, 0.0f, 15.0f);
 	gameObjectList.push_back(pGrass);
 
 	//colour buffer texture
@@ -201,30 +201,12 @@ int main(int argc, char* args[])
 
 	btDiscreteDynamicsWorld* dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 
-	dynamicsWorld->setGravity(btVector3(0, -10, 0));
+	dynamicsWorld->setGravity(btVector3(0, -1, 0));
 
-	//the ground is a cube which is the same size and at the same location as the gameObject pGrass
-	btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.), btScalar(2.), btScalar(50.)));
-
-	btTransform groundTransform;
-	groundTransform.setIdentity();
-	groundTransform.setOrigin(btVector3(0.0f, -10.0f, 0.0f));
-
-	btScalar mass(0.);
-	btVector3 localInertia(0, 0, 0);
-
-	//using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
-	btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
-	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
-	btRigidBody* groundBody = new btRigidBody(rbInfo);
-
-	//add the body to the dynamics world doesn't work
-	//dynamicsWorld->addRigidBody(groundBody);
-
-	//for (gameObject*pObj : gameObjectList)
-	//{
-		//dynamicsWorld->addRigidBody(pObj->collision.getRigidBody());
-	//}
+	for (gameObject*pObj : gameObjectList)
+	{
+		dynamicsWorld->addRigidBody(pObj->collision.getRigidBody());
+	}
 
 	//Event loop, we will loop until running is set to false, usually if escape has been pressed or window is closed
 	bool running = true;
@@ -254,6 +236,11 @@ int main(int argc, char* args[])
 				//Check the actual key code of the key that has been pressed
 				switch (ev.key.keysym.sym)
 				{
+					//Space key
+				case SDLK_SPACE:
+					collisionOn = true;
+					break;
+
 					//W key
 				case SDLK_w:
 					cameraPosition.z -= 0.1;
@@ -318,13 +305,9 @@ int main(int argc, char* args[])
 		currentTicks = SDL_GetTicks();
 		float deltaTime = (float)(currentTicks - lastTicks) / 1000.0f;
 
-		dynamicsWorld->stepSimulation(1.f / 60.f, 10);
-
-		for (gameObject*pObj : gameObjectList)
+		if (collisionOn == true)
 		{
-			pObj->transform.update();
-			//doesn't work
-			//pObj->collision.collisionUpdate();
+			dynamicsWorld->stepSimulation(1.f / 60.f, 10);
 		}
 
 		//Do rendering here
@@ -336,7 +319,12 @@ int main(int argc, char* args[])
 
 		for (gameObject*pObj : gameObjectList)
 		{
-
+			if (collisionOn == true)
+			{
+				pObj->collision.collisionUpdate();
+			}
+			
+			pObj->transform.update();
 			pObj->preRender();
 			GLuint currentProgramID = pObj->getShaderProgramID();
 
@@ -389,7 +377,6 @@ int main(int argc, char* args[])
 
 	//delete dynamics world
 	delete dynamicsWorld;
-	delete groundShape;
 
 	//delete solver
 	delete solver;

@@ -21,4 +21,6 @@
 
 #include "gameObject.h"
 
+bool collisionOn = false;
+
 using namespace glm;
