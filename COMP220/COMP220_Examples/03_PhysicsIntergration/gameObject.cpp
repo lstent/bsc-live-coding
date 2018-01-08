@@ -1,25 +1,12 @@
 # include "gameObject.h"
 
-gameObject::gameObject()
-{
-
-	m_DiffuseMap = 0;
-
-	m_SpecularPower = 25.0f;
-
-	m_ShaderProgramID = 0;
-}
-
 gameObject::~gameObject()
 {
 }
 
 gameObject::transform::transform()
 {
-	m_XPosition = float(0.0f);
-	m_YPosition = float(0.0f);
-	m_ZPosition = float(0.0f);
-	m_Position = glm::vec3(m_XPosition, m_YPosition, m_ZPosition);
+	m_Position = glm::vec3(0.0f, 0.0f, 0.0f);
 	m_Scale = glm::vec3(0.6, 0.6, 0.6);
 	m_Rotation = glm::vec3(0.0f, 0.0f, 0.0f);
 	m_ModelMatrix = glm::mat4(1.0f);
@@ -116,4 +103,54 @@ void gameObject::render()
 	{
 		pMesh->render();
 	}
+}
+
+void gameObject::collision::inertia(float x, float y, float z)
+{
+	nutInertia = btVector3(x, y, z);
+}
+
+void gameObject::collision::mass(float mass)
+{
+	nutMass = mass;
+}
+
+void gameObject::collision::collisionBox(float x, float y, float z)
+{
+	nutCollisionShape = new btBoxShape(btVector3(x,y,z));
+}
+
+void gameObject::collision::startCollision(float originX, float originY, float originZ)
+{
+	nutCollisionShape->calculateLocalInertia(nutMass, nutInertia);
+	nutTransform.setIdentity();
+	nutTransform.setOrigin(btVector3(originX, originY, originZ));
+	nutMotionState = new btDefaultMotionState(nutTransform);
+	btRigidBody::btRigidBodyConstructionInfo nutRbInfo(nutMass, nutMotionState, nutCollisionShape, nutInertia);
+	nutRigidBody = new btRigidBody(nutRbInfo);
+}
+
+btRigidBody * gameObject::collision::getRigidBody()
+{
+	return nutRigidBody;
+}
+
+void gameObject::collision::collisionUpdate()
+{
+	nutTransform = nutRigidBody->getWorldTransform();
+	nutOrigin = nutTransform.getOrigin();
+	nutRotation = nutTransform.getRotation();
+
+	gameObjectsRef->transform.setPosition(glm::vec3(nutOrigin.getX(), nutOrigin.getY(), nutOrigin.getZ()));
+}
+
+void gameObject::collision::collisionDelete()
+{
+	delete nutCollisionShape;
+	delete nutRigidBody->getMotionState();
+	delete nutRigidBody;
+}
+
+gameObject::collision::collision()
+{
 }

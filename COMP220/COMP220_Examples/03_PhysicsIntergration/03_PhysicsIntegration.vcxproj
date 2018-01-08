@@ -93,11 +93,12 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>C:\Users\Lucy-Poo\Desktop\bsc-live-coding\Libraries\assimp\include;..\..\..\Libraries\SDL2_image-2.0.1\include;..\..\..\Libraries\glm;..\..\..\Libraries\glew-2.1.0\include;..\..\..\Libraries\SDL2-2.0.6\include;..\..\..\Libraries\bullet3-2.87\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalOptions>/MP /wd4244 /wd4267 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/MP /wd4244 /wd4267</AdditionalOptions>
       <PreprocessorDefinitions>_MBCS;BT_USE_DOUBLE_PRECISION;_DEBUG=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <FloatingPointModel>Fast</FloatingPointModel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>..\..\..\Libraries\assimp\lib;..\..\..\Libraries\SDL2_image-2.0.1\lib\x64;..\..\..\Libraries\SDL2-2.0.6\lib\x64;..\..\..\Libraries\glew-2.1.0\lib\Release\x64;..\..\..\Libraries\bullet3-2.87\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -165,6 +166,7 @@ copy $(ProjectDir)\*.glsl $(OutDir)\*.glsl</Command>
     <None Include="passThroughVert.glsl" />
     <None Include="postBlackAndWhite.glsl" />
     <None Include="postTextureFrag.glsl" />
+    <None Include="postWaterEffect.glsl" />
     <None Include="textureFrag.glsl" />
     <None Include="textureVert.glsl" />
     <None Include="vert.glsl" />

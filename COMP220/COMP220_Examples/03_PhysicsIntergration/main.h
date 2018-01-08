@@ -5,14 +5,14 @@
 #include <fstream>
 
 #include <SDL.h>
-#include <GL\glew.h>
+#include <gl\glew.h>
 #include <SDL_opengl.h>
 
 #include <glm\glm.hpp>
 #include <glm\gtx\transform.hpp>
 #include <glm\gtc\type_ptr.hpp>
 
-#include "btBulletDynamicsCommon.h"
+#include <btBulletDynamicsCommon.h>
 
 #include "vertex.h"
 #include "Shader.h"

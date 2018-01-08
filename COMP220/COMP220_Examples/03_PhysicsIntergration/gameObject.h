@@ -6,6 +6,7 @@
 #include <glm\glm.hpp>
 #include <glm\gtx\transform.hpp>
 #include <glm\gtc\type_ptr.hpp>
+#include <btBulletDynamicsCommon.h>
 
 #include "Model.h"
 #include "Texture.h"
@@ -14,7 +15,12 @@
 class gameObject
 {
 public:
-	gameObject();
+	gameObject() : collision(this)
+	{
+		m_DiffuseMap = 0;
+		m_SpecularPower = 25.0f;
+		m_ShaderProgramID = 0;
+	}
 	~gameObject();
 
 	void loadMeshesFromFile(const std::string& filename);
@@ -25,6 +31,32 @@ public:
 	void preRender();
 	void render();
 
+	class collision
+	{
+	public:
+		collision(gameObject*gameObjectsRef) : gameObjectsRef(gameObjectsRef) {}
+		collision();
+		void inertia(float x,float y,float z);
+		void mass(float mass);
+		void collisionBox(float x, float y, float z);
+		void startCollision(float originX, float originY, float originZ);
+		btRigidBody* getRigidBody();
+		void collisionUpdate();
+		void collisionDelete();
+
+	private:
+		gameObject* gameObjectsRef;
+		btCollisionShape* nutCollisionShape;
+		btVector3 nutInertia;
+		btScalar nutMass;
+		btTransform nutTransform;
+		btDefaultMotionState* nutMotionState;
+		btRigidBody* nutRigidBody;
+		btVector3 nutOrigin;
+		btQuaternion nutRotation;
+		
+	}collision;
+
 	class transform
 	{
 	public:
@@ -32,9 +64,6 @@ public:
 		transform(gameObject*gameObjectsRef) : gameObjectsRef(gameObjectsRef) {}
 		~transform();
 		void update();
-		float m_XPosition;
-		float m_YPosition;
-		float m_ZPosition;
 
 		//Sets the position of the game object
 		void setPosition(const glm::vec3& position)
@@ -169,10 +198,6 @@ private:
 	//Textures
 	GLuint m_DiffuseMap;
 
-	//material
-	//glm::vec4 m_AmbientMaterialColour;
-	//glm::vec4 m_DiffuseMaterialColour;
-	//glm::vec4 m_SpecularMaterialColour;
 	float m_SpecularPower;
 
 	GLuint m_ShaderProgramID;

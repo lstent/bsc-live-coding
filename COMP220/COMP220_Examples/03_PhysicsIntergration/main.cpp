@@ -71,10 +71,14 @@ int main(int argc, char* args[])
 
 	//Create game object
 	gameObject * pNut = new gameObject();
-	pNut->transform.setPosition(vec3(0.0f, 7.0f, 0.0f));
+	pNut->transform.setPosition(vec3(0.0f, 6.0f, 0.0f));
 	pNut->loadMeshesFromFile("Large_Oak_Dark_01.obj");
 	pNut->loadDiffuseTextureFromFile("Giraffe.jpg");
 	pNut->loadShaderProgram("textureVert.glsl", "textureFrag.glsl");
+	pNut->collision.collisionBox(2,2,2);
+	pNut->collision.mass(1.0f);
+	pNut->collision.inertia(0,0,0);
+	pNut->collision.startCollision(0.0f, 7.0f, 0.0f);
 	gameObjectList.push_back(pNut);
 
 	gameObject * pShroom = new gameObject();
@@ -83,6 +87,10 @@ int main(int argc, char* args[])
 	pShroom->loadMeshesFromFile("Mushroom_Red_01.obj");
 	pShroom->loadDiffuseTextureFromFile("iDunno.jpg");
 	pShroom->loadShaderProgram("textureVert.glsl", "textureFrag.glsl");
+	pNut->collision.collisionBox(7.0f, 7.0f, 7.0f);
+	pNut->collision.mass(1.0f);
+	pNut->collision.inertia(0, 0, 0);
+	pNut->collision.startCollision(5.0f, 0.0f, 0.0f);
 	gameObjectList.push_back(pShroom);
 
 	gameObject * pTree = new gameObject();
@@ -91,14 +99,22 @@ int main(int argc, char* args[])
 	pTree->loadMeshesFromFile("Oak_Dark_01.obj");
 	pTree->loadDiffuseTextureFromFile("wood.jpg");
 	pTree->loadShaderProgram("textureVert.glsl", "textureFrag.glsl");
+	pNut->collision.collisionBox(7.0f, 7.0f, 7.0f);
+	pNut->collision.mass(1.0f);
+	pNut->collision.inertia(0, 0, 0);
+	pNut->collision.startCollision(-5.0f, 0.0f, 0.0f);
 	gameObjectList.push_back(pTree);
 
 	gameObject * pGrass = new gameObject();
 	pGrass->transform.setPosition(vec3(-70.0f, -5.0f, 15.0f));
-	pGrass->transform.setScale(vec3(187.0f, 0.0f, 187.0f));
+	pGrass->transform.setScale(vec3(187.0f, 1.0f, 187.0f));
 	pGrass->loadMeshesFromFile("Plate_Grass_01.obj");
 	pGrass->loadDiffuseTextureFromFile("feather.jpg");
 	pGrass->loadShaderProgram("textureVert.glsl", "textureFrag.glsl");
+	pNut->collision.collisionBox(187.0f, 1.0f, 187.0f);
+	pNut->collision.mass(1.0f);
+	pNut->collision.inertia(0, 0, 0);
+	pNut->collision.startCollision(-70.0f, -5.0f, 15.0f);
 	gameObjectList.push_back(pGrass);
 
 	//colour buffer texture
@@ -144,8 +160,10 @@ int main(int argc, char* args[])
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 
-	GLuint postProcessingProgramID = LoadShaders("passThroughVert.glsl", "postBlackAndWhite.glsl");
+	GLuint postProcessingProgramID = LoadShaders("passThroughVert.glsl", "postWaterEffect.glsl");
+	//GLuint postProcessingProgramID = LoadShaders("passThroughVert.glsl", "postBlackAndWhite.glsl");
 	GLint texture0Location = glGetUniformLocation(postProcessingProgramID, "texture0");
+	GLint offSetLocation = glGetUniformLocation(postProcessingProgramID, "offSet");
 
 	// position
 	glm::vec3 position = glm::vec3(0, 0, 5);
@@ -168,7 +186,7 @@ int main(int argc, char* args[])
 	glEnable(GL_DEPTH_TEST);
 	int lastTicks = SDL_GetTicks();
 	int currentTicks = SDL_GetTicks();
-	/*
+	
 	///collision configuration contains default setup for memory, collision setup. Advanced users can create their own configuration.
 	btDefaultCollisionConfiguration* collisionConfiguration = new btDefaultCollisionConfiguration();
 
@@ -183,15 +201,14 @@ int main(int argc, char* args[])
 
 	btDiscreteDynamicsWorld* dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, overlappingPairCache, solver, collisionConfiguration);
 
-	dynamicsWorld->setGravity(btVector3(0, -1, 0));
+	dynamicsWorld->setGravity(btVector3(0, -10, 0));
 
-	//the ground is a cube of side 100 at position y = -5.
-	//the sphere will hit it at y = -6, with center at -5
-	btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.), btScalar(1.), btScalar(50.)));
+	//the ground is a cube which is the same size and at the same location as the gameObject pGrass
+	btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(50.), btScalar(2.), btScalar(50.)));
 
 	btTransform groundTransform;
 	groundTransform.setIdentity();
-	groundTransform.setOrigin(btVector3(-70.0f, -5.0f, 15.0f));
+	groundTransform.setOrigin(btVector3(0.0f, -10.0f, 0.0f));
 
 	btScalar mass(0.);
 	btVector3 localInertia(0, 0, 0);
@@ -201,26 +218,13 @@ int main(int argc, char* args[])
 	btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
 	btRigidBody* groundBody = new btRigidBody(rbInfo);
 
-	//add the body to the dynamics world
-	dynamicsWorld->addRigidBody(groundBody);
+	//add the body to the dynamics world doesn't work
+	//dynamicsWorld->addRigidBody(groundBody);
 
-	//create a dynamic rigidbody
-	btCollisionShape* nutCollisionShape = new btBoxShape(btVector3(2, 2, 2));
-	btVector3 nutInertia(0, 0, 0);
-	btScalar nutMass(1.f);
-	nutCollisionShape->calculateLocalInertia(nutMass, nutInertia);
-	
-	// Create Dynamic Objects
-	btTransform nutTransform;
-	nutTransform.setIdentity();
-	nutTransform.setOrigin(btVector3(pNut->transform.getPosition.m_XPosition, pNut->transform.getPosition.m_YPosition, pNut->transform.getPosition.m_ZPosition));
-
-	//using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-	btDefaultMotionState* nutMotionState = new btDefaultMotionState(nutTransform);
-	btRigidBody::btRigidBodyConstructionInfo nutRbInfo(nutMass, nutMotionState, nutCollisionShape, nutInertia);
-	btRigidBody* nutRigidBody = new btRigidBody(nutRbInfo);
-
-	dynamicsWorld->addRigidBody(nutRigidBody);*/
+	//for (gameObject*pObj : gameObjectList)
+	//{
+		//dynamicsWorld->addRigidBody(pObj->collision.getRigidBody());
+	//}
 
 	//Event loop, we will loop until running is set to false, usually if escape has been pressed or window is closed
 	bool running = true;
@@ -314,15 +318,14 @@ int main(int argc, char* args[])
 		currentTicks = SDL_GetTicks();
 		float deltaTime = (float)(currentTicks - lastTicks) / 1000.0f;
 
+		dynamicsWorld->stepSimulation(1.f / 60.f, 10);
+
 		for (gameObject*pObj : gameObjectList)
 		{
 			pObj->transform.update();
+			//doesn't work
+			//pObj->collision.collisionUpdate();
 		}
-
-		//dynamicsWorld->stepSimulation(1.f / 60.f, 10);
-		//nutTransform = nutRigidBody->getWorldTransform();
-		//btVector3 nutOrigin = nutTransform.getOrigin();
-		//btQuaternion nutRotation = nutTransform.getRotation();
 
 		//Do rendering here
 		glEnable(GL_DEPTH_TEST);
@@ -362,6 +365,7 @@ int main(int argc, char* args[])
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, colourBufferID);
 		glUniform1i(texture0Location, 0);
+		glUniform1f(offSetLocation, deltaTime);
 
 		glBindVertexArray(screenVAO);
 		glDrawArrays(GL_TRIANGLE_STRIP,0,4);
@@ -371,19 +375,21 @@ int main(int argc, char* args[])
 		lastTicks = currentTicks;
 	}
 
-	/*
-	dynamicsWorld->removeRigidBody(nutRigidBody);
-	delete nutCollisionShape;
-	delete nutRigidBody->getMotionState();
-	delete nutRigidBody;
-
-	dynamicsWorld->removeRigidBody(groundBody);
+	for (int i = dynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--)
+	{
+		btCollisionObject*obj = dynamicsWorld->getCollisionObjectArray()[i];
+		btRigidBody*body = btRigidBody::upcast(obj);
+		if (body&&body->getMotionState())
+		{
+			delete body->getMotionState();
+		}
+		dynamicsWorld->removeCollisionObject(obj);
+		delete obj;
+	}
 
 	//delete dynamics world
 	delete dynamicsWorld;
 	delete groundShape;
-	delete groundBody->getMotionState();
-	delete groundBody;
 
 	//delete solver
 	delete solver;
@@ -394,7 +400,7 @@ int main(int argc, char* args[])
 	//delete dispatcher
 	delete dispatcher;
 
-	delete collisionConfiguration;*/
+	delete collisionConfiguration;
 
 	auto gameObjectIter = gameObjectList.begin();
 	while (gameObjectIter != gameObjectList.end())
